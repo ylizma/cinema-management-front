@@ -15,8 +15,9 @@
               class="text-center block border border-gray rounded py-2 px-4 bg-gray-500 hover:bg-gray-700 text-white"
               href="#"
               @click="getRooms(cinema._links.rooms.href, cinema.name)"
-              >{{ cinema.name }}</a
-            >
+              :class="(cinema.name==choosedCinema)?'bg-gray-700':''"
+              >{{ cinema.name }}
+              </a>
           </li>
         </ul>
       </div>
@@ -31,12 +32,11 @@
 import axios from "axios";
 import Cities from "@/components/Cities";
 import Projection from "@/components/Projection";
-
 export default {
   name: "Home",
   components: {
     Cities,
-    Projection
+    Projection,
   },
   data() {
     return {
