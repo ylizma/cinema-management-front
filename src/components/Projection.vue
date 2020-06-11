@@ -25,7 +25,51 @@
           </div>
         </div>
         <div v-show="ischoosed">
-          <ticket v-for="(ticket, index) in tickets" :key="index" :ticket="ticket" />
+          <div
+            class="font-semibold font-serif text-sm border-b-2 p-1"
+            v-if="choosedProjection"
+          >
+            Movie: {{ choosedProjection.movie.title }} <br />
+            Room: {{ choosedProjection.room.name }} <br />
+            Time: {{ choosedProjection.seance.startHour }}
+          </div>
+          <div class="grid grid-cols-4" v-if="ischoosed && !hideTickets">
+            <ticket
+              v-for="(ticket, index) in tickets"
+              :key="index"
+              :ticket="ticket"
+              v-on:reserve="reserver"
+            />
+          </div>
+          <button
+            v-if="ischoosed && !hideTickets"
+            type="button"
+            class="bg-red-200 rounded-sm px-2 py-1"
+            @click="[(showForm = true), (hideTickets = true)]"
+          >
+            Payer
+          </button>
+          <div class="p-2" v-show="hideTickets">
+            <form @submit.prevent="saveReservation">
+              <i>Name:</i>
+              <input
+                type="text"
+                v-model="clientName"
+                class="border-2 inline-block"
+                required
+              />
+              PaymentCode:
+              <input
+                type="text"
+                v-model="paymentId"
+                class="border-2 inline-block"
+                required
+              />
+              <button type="submit" class="px-2 py-1 my-2 bg-blue-200">
+                pay tickets
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -45,7 +89,12 @@ export default {
       projections: [],
       ischoosed: false,
       tickets: [],
-      choosedProjection:{}
+      choosedProjection: "",
+      choosedTickets: [],
+      showForm: false,
+      hideTickets: false,
+      clientName: "",
+      paymentId: "",
     };
   },
   methods: {
@@ -62,20 +111,52 @@ export default {
         });
     },
     getTickets(projection) {
-       var link = projection._links.tickets.href.replace("{?projection}", "");
-      this.choosedProjection=projection
+      var link = projection._links.tickets.href.replace("{?projection}", "");
+      this.choosedProjection = projection;
       axios
-        .get(link+ "?projection=ticket")
+        .get(link + "?projection=ticket")
         .then((res) => {
           console.log(res.data._embedded.tickets);
-          this.tickets = res.data._embedded.tickets
+          this.tickets = res.data._embedded.tickets;
+        })
+        .catch((err) => console.error(err));
+      this.ischoosed = !this.ischoosed;
+    },
+    reserver(ticket) {
+      let p = this.choosedTickets.find((t) => t.id == ticket.id);
+      if (p != undefined) {
+        this.choosedTickets = this.choosedTickets.filter(
+          (t) => t.id != ticket.id
+        );
+        console.log("deleted");
+      } else this.choosedTickets.push(ticket);
+      console.log(this.choosedTickets);
+    },
+    saveReservation() {
+      let ticket = {
+        clientName: this.clientName,
+        paymentId: this.paymentId,
+        tickets: this.choosedTickets.map((t) => t.id),
+      };
+      axios
+        .post("http://localhost:8888/payTicket", ticket)
+        .then((res) => {
+          console.log(res);
         })
         .catch((err) => console.error(err));
         this.ischoosed = !this.ischoosed
+        this.hideTickets = !this.hideTickets
+        alert("your reservation is successfully taken !!")
     },
   },
   created() {
     this.getProjecions();
+  },
+  watch: {
+    room: function() {
+      this.ischoosed = false;
+      console.log("changed");
+    },
   },
 };
 </script>

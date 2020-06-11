@@ -46,7 +46,8 @@ export default {
     };
   },
   methods: {
-    getCity(link) {
+    getCity(link) {//list of cinema
+    this.cinemas = []
       axios
         .get(link)
         .then((res) => {
@@ -56,6 +57,7 @@ export default {
         .catch((err) => console.error(err));
     },
     getRooms(link, name) {
+      this.rooms=[]
       this.choosedCinema = name;
       axios
         .get(link)
